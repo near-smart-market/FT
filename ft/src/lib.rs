@@ -44,8 +44,8 @@ impl Contract {
             total_supply,
             FungibleTokenMetadata {
                 spec: FT_METADATA_SPEC.to_string(),
-                name: "Example NEAR fungible token".to_string(),
-                symbol: "EXAMPLE".to_string(),
+                name: "NEAR Smart Market Token".to_string(),
+                symbol: "NEAR-SMT".to_string(),
                 icon: Some(DATA_IMAGE_SVG_NEAR_ICON.to_string()),
                 reference: None,
                 reference_hash: None,
@@ -85,6 +85,22 @@ impl Contract {
 
     fn on_tokens_burned(&mut self, account_id: AccountId, amount: Balance) {
         log!("Account @{} burned {}", account_id, amount);
+    }
+
+    #[payable]
+    fn buy_ft(&mut self){
+        log!("This contract expects atleast 1 NEAR in deposit, but will only give you 100 NEAR-SMT. Use at your own risk. :) ");
+        assert_eq!(env::attached_deposit() > 10000000000000000000000000, true);
+        let account_id = env::signer_account_id();
+        self.token.internal_deposit(&account_id, env::attached_deposit());
+
+        let amount: u128 = 100;
+        let decimals: u8 = match self.metadata.get() {
+            Some(m) => m.decimals,
+            None => 1
+        };
+        let amount_in_ft: U128 = (amount * decimals as u128).into();
+        self.token.ft_transfer(account_id, amount_in_ft, Some(String::from("Buying some FT with NEAR")));
     }
 }
 
